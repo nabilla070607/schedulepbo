@@ -1,9 +1,0 @@
-scheduler\model\Course.class
-scheduler\engine\ScheduleGenerator$SlotCandidate.class
-scheduler\model\Room.class
-scheduler\Main.class
-scheduler\util\DataSeeder.class
-scheduler\engine\CSPEngine.class
-scheduler\model\Lecturer.class
-scheduler\model\Assignment.class
-scheduler\engine\ScheduleGenerator.class
