@@ -1,0 +1,2537 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Polines Scheduler - Sistem Optimasi Penjadwalan Kuliah</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
+    <style>
+        /* ============================================================
+                   RESET & BASE
+                ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+            vertical-align: middle;
+        }
+
+        .hidden-view {
+            display: none !important;
+        }
+
+        .section-hidden {
+            display: none !important;
+        }
+        .section-active {
+            display: block !important;
+        }
+
+        /* ============================================================
+                   TOAST
+                ============================================================ */
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            border-left: 4px solid #1a3a7a;
+            z-index: 9999;
+            min-width: 280px;
+            display: none;
+        }
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        .toast-success {
+            border-left-color: #059669;
+        }
+        .toast-error {
+            border-left-color: #dc2626;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ============================================================
+                   LOGIN PAGE (common)
+                ============================================================ */
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ec 100%);
+            padding: 20px;
+        }
+        .login-page.hide {
+            display: none !important;
+        }
+        .login-container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            padding: 48px 40px 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: #1a3a7a;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .logo-icon span {
+            color: white;
+            font-size: 28px;
+        }
+        .logo-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a3a7a;
+            letter-spacing: -0.5px;
+        }
+        .logo-subtitle {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1f2937;
+            background: #fafbfc;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: #1a3a7a;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(26, 58, 122, 0.1);
+        }
+        .role-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .role-btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .role-btn.active {
+            background: #1a3a7a;
+            color: white;
+            box-shadow: 0 2px 8px rgba(26, 58, 122, 0.2);
+        }
+        .role-btn:hover:not(.active) {
+            background: #e5e7eb;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: #1a3a7a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+            margin-top: 4px;
+        }
+        .auth-btn:hover {
+            background: #142f63;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 58, 122, 0.3);
+        }
+        .footer-links .text-xs {
+            font-size: 10px;
+        }
+        .footer-text {
+            font-size: 10px;
+            color: #9ca3af;
+            font-style: italic;
+            letter-spacing: 0.3px;
+        }
+        .help-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #1a3a7a;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .help-link:hover {
+            color: #142f63;
+        }
+
+        /* ============================================================
+                   ADMIN DASHBOARD STYLES
+                ============================================================ */
+        .dashboard-page {
+            display: none;
+            min-height: 100vh;
+        }
+        .dashboard-page.show {
+            display: block;
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            background: #f3f4f6;
+        }
+
+        /* Sidebar admin */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 24px 16px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 50;
+        }
+        .sidebar-brand {
+            padding: 0 8px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 20px;
+        }
+        .sidebar-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a3a7a;
+        }
+        .sidebar-brand p {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .sidebar-nav {
+            list-style: none;
+        }
+        .sidebar-nav li {
+            margin-bottom: 4px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .sidebar-nav a:hover {
+            background: #f3f4f6;
+            color: #1a3a7a;
+        }
+        .sidebar-nav a.active {
+            background: #eff2f9;
+            color: #1a3a7a;
+            font-weight: 600;
+        }
+        .sidebar-nav a .material-symbols-outlined {
+            font-size: 20px;
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sidebar-footer a:hover {
+            background: #f3f4f6;
+            color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .topbar h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a3a7a;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-user .avatar {
+            width: 36px;
+            height: 36px;
+            background: #1a3a7a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .topbar-user .name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .topbar-user .role {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        /* Admin Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        .stat-card .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a3a7a;
+            margin-top: 4px;
+        }
+        .stat-card .icon {
+            float: right;
+            font-size: 28px;
+            color: #d1d5db;
+        }
+
+        .chart-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        .chart-section h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        .chart-container {
+            height: 250px;
+        }
+
+        /* Data Master Admin */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #d1d5db;
+        }
+
+        .data-master-container .master-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .data-master-container .master-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .data-master-container .master-card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-master-container .master-card-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+        .data-master-container .master-item {
+            padding: 12px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+        .data-master-container .master-item:hover {
+            background: #f9fafb;
+            transform: translateX(4px);
+        }
+        .data-master-container .master-item .item-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        .data-master-container .master-item .item-sub {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .data-master-container .master-item .item-edit {
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            font-size: 20px;
+        }
+        .data-master-container .master-item .item-edit:hover {
+            color: #1a3a7a;
+        }
+        .data-master-container .badge-theory {
+            background: #d8e2ff;
+            color: #001a42;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+        }
+        .data-master-container .badge-lab {
+            background: #ffdbcb;
+            color: #341100;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+        }
+        .data-master-container .master-footer {
+            padding: 10px 20px;
+            border-top: 1px solid #f3f4f6;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+            font-style: italic;
+            flex-shrink: 0;
+        }
+        .data-master-container .master-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .data-master-container .stat-item {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .data-master-container .stat-item .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .data-master-container .stat-item .stat-icon.blue {
+            background: rgba(26, 58, 122, 0.1);
+            color: #1a3a7a;
+        }
+        .data-master-container .stat-item .stat-icon.green {
+            background: rgba(5, 150, 105, 0.1);
+            color: #059669;
+        }
+        .data-master-container .stat-item .stat-icon.orange {
+            background: rgba(217, 119, 6, 0.1);
+            color: #d97706;
+        }
+        .data-master-container .stat-item .stat-icon.purple {
+            background: rgba(75, 28, 0, 0.1);
+            color: #4b1c00;
+        }
+        .data-master-container .stat-item .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-master-container .stat-item .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a3a7a;
+        }
+        .data-master-container .terminal-block {
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            margin-bottom: 24px;
+        }
+        .data-master-container .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+        .data-master-container .terminal-header .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .data-master-container .terminal-header .dot.red {
+            background: #dc2626;
+        }
+        .data-master-container .terminal-header .dot.yellow {
+            background: #d97706;
+        }
+        .data-master-container .terminal-header .dot.green {
+            background: #059669;
+        }
+        .data-master-container .terminal-header .terminal-label {
+            margin-left: 12px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .data-master-container .terminal-body {
+            padding: 16px 20px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 13px;
+            color: #10b981;
+            max-height: 80px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        .data-master-container .terminal-body .log-line {
+            margin-bottom: 2px;
+            color: #10b981;
+        }
+        .data-master-container .terminal-body .log-line.info {
+            color: #60a5fa;
+        }
+
+        /* CSP Rules Admin */
+        .csp-header-banner {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .csp-header-banner .title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .csp-header-banner .title-group h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a3a7a;
+        }
+        .csp-header-banner .title-group .badge-csp {
+            background: #eff2f9;
+            color: #1a3a7a;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+        }
+        .csp-header-banner .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 8px 16px;
+            min-width: 240px;
+        }
+        .csp-header-banner .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: #1f2937;
+            font-family: "Inter", sans-serif;
+            width: 100%;
+        }
+        .csp-header-banner .search-box input::placeholder {
+            color: #9ca3af;
+        }
+        .csp-header-banner .search-box span {
+            color: #9ca3af;
+            font-size: 20px;
+        }
+
+        .csp-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .csp-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 20px 24px 24px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .csp-card .card-badge {
+            position: absolute;
+            top: -12px;
+            left: 24px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 16px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+        }
+        .csp-card .card-badge.hard {
+            background: #dc2626;
+            color: white;
+        }
+        .csp-card .card-badge.soft {
+            background: #3b82f6;
+            color: white;
+        }
+        .csp-rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #dc2626;
+        }
+        .csp-rule-item.soft-rule {
+            border-left-color: #3b82f6;
+        }
+        .csp-rule-item .rule-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .csp-rule-item .rule-content {
+            flex: 1;
+        }
+        .csp-rule-item .rule-content .rule-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+        }
+        .csp-rule-item .rule-content .rule-desc {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .csp-rule-item .rule-content .rule-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 1px 10px;
+            border-radius: 999px;
+            margin-top: 4px;
+        }
+        .csp-rule-item .rule-content .rule-tag.tag-red {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+        .csp-rule-item .rule-content .rule-tag.tag-blue {
+            background: #bfdbfe;
+            color: #1e3a5f;
+        }
+        .csp-rule-item .rule-content .rule-tag.tag-green {
+            background: #a7f3d0;
+            color: #065f46;
+        }
+        .csp-rule-item .rule-content .rule-tag.tag-amber {
+            background: #fde68a;
+            color: #78350f;
+        }
+        .csp-rule-item .rule-check {
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        .csp-rule-item .rule-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+
+        .csp-terminal {
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            margin-top: 20px;
+        }
+        .csp-terminal .term-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+        .csp-terminal .term-header .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .csp-terminal .term-header .dot.red {
+            background: #dc2626;
+        }
+        .csp-terminal .term-header .dot.yellow {
+            background: #d97706;
+        }
+        .csp-terminal .term-header .dot.green {
+            background: #059669;
+        }
+        .csp-terminal .term-header .term-label {
+            margin-left: 12px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .csp-terminal .term-body {
+            padding: 16px 20px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .csp-terminal .term-body .line-ok {
+            color: #10b981;
+        }
+        .csp-terminal .term-body .line-warn {
+            color: #fbbf24;
+        }
+        .csp-terminal .term-body .line-info {
+            color: #60a5fa;
+        }
+        .csp-terminal .term-body .line-muted {
+            color: #64748b;
+        }
+
+        .csp-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .csp-actions .btn-outline {
+            background: white;
+            border: 1.5px solid #e5e7eb;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1f2937;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: "Inter", sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .csp-actions .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .csp-actions .btn-primary {
+            background: #1a3a7a;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: "Inter", sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .csp-actions .btn-primary:hover {
+            background: #142f63;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 58, 122, 0.25);
+        }
+
+        .csp-footer {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .csp-footer .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .csp-footer .footer-left .version {
+            font-weight: 600;
+            color: #1a3a7a;
+        }
+        .csp-footer .footer-right {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+        }
+        .csp-footer .footer-right a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+        .csp-footer .footer-right a:hover {
+            color: #1a3a7a;
+        }
+
+        /* ============================================================
+                   DOSEN DASHBOARD STYLES
+                ============================================================ */
+        #dosenApp {
+            display: none;
+            min-height: 100vh;
+            background: #f8f9fb;
+        }
+        #dosenApp.show {
+            display: block;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #444651;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            background: #f3f4f6;
+            color: #00236f;
+        }
+        .nav-link.active {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2);
+        }
+        .nav-link.active .material-symbols-outlined {
+            color: #ffffff;
+        }
+
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .schedule-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .schedule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #444651;
+            border-radius: 10px;
+        }
+
+        /* ============================================================
+                   MAHASISWA DASHBOARD STYLES
+                ============================================================ */
+        #studentDashboardPage {
+            display: none;
+        }
+        #studentDashboardPage.show {
+            display: block;
+        }
+
+        /* ============================================================
+                   RESPONSIVE
+                ============================================================ */
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 32px 24px;
+                margin: 16px;
+            }
+            .role-buttons {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 4px;
+            }
+            .role-btn {
+                font-size: 11px;
+                padding: 8px 6px;
+            }
+
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 16px;
+            }
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .data-master-container .master-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .csp-grid-2col {
+                grid-template-columns: 1fr;
+            }
+            .csp-header-banner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .csp-header-banner .search-box {
+                min-width: unset;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .data-master-container .master-stats {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 60px;
+                padding: 16px 8px;
+            }
+            .sidebar-brand h1,
+            .sidebar-brand p,
+            .sidebar-nav a span:last-child,
+            .sidebar-footer a span:last-child {
+                display: none;
+            }
+            .main-content {
+                margin-left: 60px;
+                padding: 12px;
+            }
+            .topbar {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            .csp-actions {
+                flex-direction: column;
+            }
+            .csp-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================
+MODAL ADD DATA MASTER
+============================================================ -->
+<div id="addDataModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 id="addModalTitle" style="font-size:18px;font-weight:700;color:#1a3a7a;">Tambah Data</h3>
+            <span class="material-symbols-outlined" style="cursor:pointer;color:#9ca3af;" onclick="closeAddModal()">close</span>
+        </div>
+
+        <form id="addDataForm">
+            <div id="addModalFields" style="display:flex;flex-direction:column;gap:14px;"></div>
+
+            <div style="display:flex;gap:10px;margin-top:24px;">
+                <button type="button" onclick="closeAddModal()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;font-weight:600;font-size:13px;color:#444651;cursor:pointer;">Batal</button>
+                <button type="submit" style="flex:1;padding:12px;border-radius:10px;border:none;background:#1a3a7a;color:white;font-weight:600;font-size:13px;cursor:pointer;">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================
+TOAST
+============================================================ -->
+<div class="toast" id="toast">
+    <div class="toast-title font-semibold text-sm text-gray-800" id="toastTitle">Success</div>
+    <div class="toast-message text-xs text-gray-500 mt-0.5" id="toastMessage">Login successful</div>
+</div>
+
+<!-- ============================================================
+LOGIN PAGE (COMMON)
+============================================================ -->
+<div class="login-page" id="loginPage">
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <span class="material-symbols-outlined">school</span>
+            </div>
+            <h1 class="logo-title">Polines Scheduler</h1>
+            <p class="logo-subtitle">Optimization System Login</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="role-buttons">
+                <button type="button" class="role-btn" data-role="admin">
+                    <span>👑</span> Admin
+                </button>
+                <button type="button" class="role-btn active" data-role="dosen">
+                    <span>👨‍🏫</span> Dosen
+                </button>
+                <button type="button" class="role-btn" data-role="mahasiswa">
+                    <span>👨‍🎓</span> Mahasiswa
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="emailLabel">INSTITUTIONAL EMAIL</label>
+                <input type="email" class="form-input" id="email" placeholder="dosen@polines.ac.id" value="dosen@polines.ac.id" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">PASSWORD</label>
+                <input type="password" class="form-input" id="password" placeholder="••••••••" value="dosen123" required />
+            </div>
+
+            <button type="submit" class="auth-btn">AUTHENTICATE</button>
+
+            <div class="footer-links text-center mt-6 pt-4 border-t border-gray-100">
+                <p class="footer-text">Academic Personnel Access Only</p>
+                <button type="button" class="help-link" onclick="showHelpHint()">Help?</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================
+ADMIN DASHBOARD
+============================================================ -->
+<div class="dashboard-page" id="dashboardPage">
+    <div class="dashboard-wrapper">
+
+        <!-- Sidebar Admin -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h1>Polytechnic Admin</h1>
+                <p>Scheduling Portal</p>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a onclick="showAdminSection('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a></li>
+                <li><a onclick="showAdminSection('data-master')"><span class="material-symbols-outlined">database</span><span>Data Master</span></a></li>
+                <li><a class="active" onclick="showAdminSection('csp-rules')"><span class="material-symbols-outlined">rule</span><span>CSP Rules</span></a></li>
+                <li><a onclick="showAdminSection('generator')"><span class="material-symbols-outlined">engineering</span><span>Generator</span></a></li>
+                <li><a onclick="showAdminSection('schedule')"><span class="material-symbols-outlined">calendar_month</span><span>Schedule</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a onclick="handleLogout()"><span class="material-symbols-outlined">logout</span><span>Log Out</span></a>
+            </div>
+        </aside>
+
+        <!-- Main Content Admin -->
+        <main class="main-content">
+
+            <!-- Top Bar -->
+            <div class="topbar">
+                <h2 id="adminPageTitle">CSP Rules</h2>
+                <div class="topbar-right">
+                    <div class="topbar-user">
+                        <div class="avatar">AD</div>
+                        <div><div class="name">Admin User</div><div class="role">Super Administrator</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="adminDashboardSection" class="section-hidden">
+                <div class="dashboard-grid">
+                    <div class="stat-card"><span class="material-symbols-outlined icon">menu_book</span><div class="label">MATA KULIAH</div><div class="value" id="stat-matakuliah" >265</div></div>
+                    <div class="stat-card"><span class="material-symbols-outlined icon">school</span><div class="label">DOSEN</div><div class="value" id="stat-dosen" >41</div></div>
+                    <div class="stat-card"><span class="material-symbols-outlined icon">meeting_room</span><div class="label">RUANGAN</div><div class="value" id="stat-ruangan" >17</div></div>
+                    <div class="stat-card" style="border-left:4px solid #059669"><span class="material-symbols-outlined icon" style="color:#059669">verified</span><div class="label">KONFLIK</div><div class="value" id="stat-konflik" style="color:#059669">0</div></div>
+                </div>
+                <div class="chart-section"><h4>Distribusi Beban SKS Dosen</h4><div class="chart-container"><canvas id="sksChart"></canvas></div></div>
+            </div>
+
+            <!-- Data Master -->
+            <div id="adminDataMasterSection" class="section-hidden data-master-container">
+                <div class="flex justify-between items-end mb-4">
+                    <div><h2 class="text-2xl font-bold text-[#1a3a7a]">Data Master</h2><p class="text-[#6b7280] text-sm">Manage academic entities and dynamic curriculum data</p></div>
+                    <div class="bg-blue-50 border border-blue-200 text-[#1a3a7a] px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-base">info</span>
+                        <span>Adaptivitas: Admin dapat memperbarui data dinamis (dosen baru, matkul baru).</span>
+                    </div>
+                </div>
+
+                <div class="terminal-block">
+                    <div class="terminal-header"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><span class="terminal-label">data-integrity-check.sh</span></div>
+                    <div class="terminal-body custom-scrollbar" id="terminalLogs">
+                        <div class="log-line">[LOG] Cache refreshed for mata_kuliah_db</div>
+                        <div class="log-line info">[INFO] Periodic backup successful at 15:00</div>
+                        <div class="log-line">[LOG] Record #72 edited by Admin at 14:02</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                    <section class="master-card">
+                        <div class="master-card-header"><h3><span class="material-symbols-outlined text-[#1a3a7a]">groups</span>Daftar Dosen</h3>
+                            <button class="bg-[#1a3a7a] hover:bg-[#142f63] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all" onclick="openAddModal('lecturer')"><span class="material-symbols-outlined text-sm">add</span>Add</button>
+                        </div>
+                        <div class="master-card-body custom-scrollbar" id="lecturerListDataMaster"></div>
+                        <div class="master-footer">Showing 4 of 41 items</div>
+                    </section>
+                    <section class="master-card">
+                        <div class="master-card-header"><h3><span class="material-symbols-outlined text-[#1a3a7a]">meeting_room</span>Daftar Ruangan</h3>
+                            <button class="bg-[#1a3a7a] hover:bg-[#142f63] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all" onclick="openAddModal('room')"><span class="material-symbols-outlined text-sm">add</span>Add</button>
+                        </div>
+                        <div class="master-card-body custom-scrollbar" id="roomListDataMaster"></div>
+                        <div class="master-footer">Showing 4 of 17 items</div>
+                    </section>
+                    <section class="master-card">
+                        <div class="master-card-header"><h3><span class="material-symbols-outlined text-[#1a3a7a]">menu_book</span>Daftar Mata Kuliah</h3>
+                            <button class="bg-[#1a3a7a] hover:bg-[#142f63] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all" onclick="openAddModal('course')"><span class="material-symbols-outlined text-sm">add</span>Add</button>
+                        </div>
+                        <div class="master-card-body custom-scrollbar" id="courseListDataMaster"></div>
+                        <div class="master-footer">Showing 5 of 265 items</div>
+                    </section>
+                </div>
+
+                <div class="master-stats">
+                    <div class="stat-item"><div class="stat-icon blue"><span class="material-symbols-outlined text-3xl">person</span></div><div><p class="stat-label">Total Lecturers</p><p class="stat-value" id="masterStatLecturers">41</p></div></div>
+                    <div class="stat-item"><div class="stat-icon purple"><span class="material-symbols-outlined text-3xl">home</span></div><div><p class="stat-label">Total Rooms</p><p class="stat-value" id="masterStatRooms">17</p></div></div>
+                    <div class="stat-item"><div class="stat-icon orange"><span class="material-symbols-outlined text-3xl">book</span></div><div><p class="stat-label">Total Courses</p><p class="stat-value" id="masterStatCourses">265</p></div></div>
+                    <div class="stat-item"><div class="stat-icon green"><span class="material-symbols-outlined text-3xl">task_alt</span></div><div><p class="stat-label">Data Health</p><p class="stat-value" style="color:#059669">100%</p></div></div>
+                </div>
+            </div>
+
+            <!-- CSP Rules -->
+            <div id="adminCspRulesSection" class="section-hidden">
+                <div class="csp-header-banner">
+                    <div class="title-group"><h3>Academic Precision</h3><span class="badge-csp">CSP Engine v2.4</span></div>
+                    <div class="search-box"><span class="material-symbols-outlined">search</span><input type="text" placeholder="Search rules or constraints..." id="cspSearchInput" oninput="filterCspRules(this.value)" /></div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 mb-5 flex items-center gap-3 text-sm text-[#1a3a7a]">
+                    <span class="material-symbols-outlined text-base">info</span>
+                    <span><strong>Engine CSP</strong> — Constraint Satisfaction Problems memvalidasi data untuk mencegah risiko konflik jadwal.</span>
+                </div>
+
+                <div class="csp-grid-2col">
+                    <div class="csp-card">
+                        <span class="card-badge hard">Hard Constraints (Wajib)</span>
+                        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+                            <div class="csp-rule-item" data-csp-tag="hard"><span class="rule-icon material-symbols-outlined" style="color:#dc2626">lock</span><div class="rule-content"><div class="rule-title">Bebas Bentrok Ruang</div><div class="rule-desc">Memastikan tidak ada dua mata kuliah yang menggunakan ruang yang sama di jam yang sama.</div><span class="rule-tag tag-red">IMMUTABLE</span></div><div class="rule-check"><span class="material-symbols-outlined" style="color:#059669;font-size:22px">check_circle</span></div></div>
+                            <div class="csp-rule-item" data-csp-tag="hard"><span class="rule-icon material-symbols-outlined" style="color:#dc2626">lock</span><div class="rule-content"><div class="rule-title">Bebas Bentrok Dosen</div><div class="rule-desc">Mencegah satu dosen mengajar lebih dari satu kelas pada slot waktu yang beririsan.</div><span class="rule-tag tag-red">IMMUTABLE</span></div><div class="rule-check"><span class="material-symbols-outlined" style="color:#059669;font-size:22px">check_circle</span></div></div>
+                            <div class="csp-rule-item" data-csp-tag="hard"><span class="rule-icon material-symbols-outlined" style="color:#dc2626">lock</span><div class="rule-content"><div class="rule-title">Bebas Bentrok Prodi</div><div class="rule-desc">Memastikan mahasiswa dalam satu rombel/prodi tidak memiliki jadwal kuliah ganda.</div><span class="rule-tag tag-red">IMMUTABLE</span></div><div class="rule-check"><span class="material-symbols-outlined" style="color:#059669;font-size:22px">check_circle</span></div></div>
+                            <div class="csp-rule-item" data-csp-tag="hard"><span class="rule-icon material-symbols-outlined" style="color:#dc2626">lock</span><div class="rule-content"><div class="rule-title">Kesesuaian Tipe Ruang</div><div class="rule-desc">Memvalidasi kebutuhan praktikum ke Lab dan teori ke Ruang Kelas sesuai kurikulum.</div><span class="rule-tag tag-red">IMMUTABLE</span></div><div class="rule-check"><span class="material-symbols-outlined" style="color:#059669;font-size:22px">check_circle</span></div></div>
+                        </div>
+                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f3f4f6;font-size:13px;color:#6b7280;text-align:center;font-style:italic;">Sistem memastikan 100% kepatuhan pada aturan ini sebelum eksekusi generator dijalankan.</div>
+                    </div>
+
+                    <div class="csp-card">
+                        <span class="card-badge soft">Soft Constraints (Opsional)</span>
+                        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+                            <div class="csp-rule-item soft-rule" data-csp-tag="soft"><span class="rule-icon material-symbols-outlined" style="color:#3b82f6">balance</span><div class="rule-content"><div class="rule-title">Keseimbangan Beban Dosen</div><div class="rule-desc">OPTIMAL: 12-24 SKS</div><span class="rule-tag tag-blue">PRIORITY</span></div><div class="rule-check"><input type="checkbox" checked /></div></div>
+                            <div class="csp-rule-item soft-rule" data-csp-tag="soft"><span class="rule-icon material-symbols-outlined" style="color:#3b82f6">event_busy</span><div class="rule-content"><div class="rule-title">Hindari Jadwal Jumat Sore</div><div class="rule-desc">PRIORITASKAN SESI PAGI</div><span class="rule-tag tag-blue">PRIORITY</span></div><div class="rule-check"><input type="checkbox" checked /></div></div>
+                            <div class="csp-rule-item soft-rule" data-csp-tag="soft"><span class="rule-icon material-symbols-outlined" style="color:#3b82f6">schedule</span><div class="rule-content"><div class="rule-title">Pengelompokan Jam Mengajar</div><div class="rule-desc">MINIMALKAN JEDA WAKTU (GAP)</div><span class="rule-tag tag-blue">OPTIONAL</span></div><div class="rule-check"><input type="checkbox" /></div></div>
+                            <div class="csp-rule-item soft-rule" data-csp-tag="soft"><span class="rule-icon material-symbols-outlined" style="color:#3b82f6">ac_unit</span><div class="rule-content"><div class="rule-title">Preferensi Ruang Ber-AC</div><div class="rule-desc">UNTUK KELAS KAPASITAS BESAR (&gt;40)</div><span class="rule-tag tag-blue">OPTIONAL</span></div><div class="rule-check"><input type="checkbox" /></div></div>
+                        </div>
+                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f3f4f6;font-size:13px;color:#6b7280;text-align:center;font-style:italic;">Soft constraints dapat diaktifkan/nonaktifkan sesuai preferensi penjadwalan.</div>
+                    </div>
+                </div>
+
+                <div style="background:#f0f4ff;border-radius:12px;border:1px solid #bfdbfe;padding:16px 20px;margin-bottom:20px;">
+                    <div style="display:flex;align-items:flex-start;gap:12px;">
+                        <span class="material-symbols-outlined" style="color:#1a3a7a;font-size:28px">verified</span>
+                        <div><div style="font-weight:600;color:#1a3a7a;font-size:15px;">Eliminasi Risiko Konflik</div>
+                            <div style="font-size:14px;color:#4b5563;margin-top:4px;">Engine CSP kami menggunakan algoritma <strong>Backtracking Search</strong> dikombinasikan dengan <strong>Forward Checking</strong>. Setiap slot waktu divalidasi silang terhadap <strong>4.000+ variabel</strong> data master untuk memastikan jadwal yang dihasilkan nol-error secara logis.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="csp-terminal">
+                    <div class="term-header"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><span class="term-label">csp-engine-status — haro_konstraints_v1.json</span></div>
+                    <div class="term-body" id="cspTerminalBody">
+                        <div class="line-ok">[OK] Room_Collision_Checker: Active</div>
+                        <div class="line-ok">[OK] Faculty_Overlap_Validator: Active</div>
+                        <div class="line-ok">[OK] Program_Conflict_Resolver: Active</div>
+                        <div class="line-ok">[OK] Room_Type_Validator: Active</div>
+                        <div class="line-warn">[WARN] 14 Soft Constraints detected in config.</div>
+                        <div class="line-info">[INFO] Awaiting user input for optimization parameters...</div>
+                        <div class="line-muted" style="margin-top:6px;font-size:12px;border-top:1px solid #1e293b;padding-top:8px;">Last updated: 2026-06-22 15:30:42 UTC</div>
+                    </div>
+                </div>
+
+                <div class="csp-actions">
+                    <button class="btn-outline" onclick="resetCspDefaults()"><span class="material-symbols-outlined" style="font-size:18px">restart_alt</span>Reset Default</button>
+                    <button class="btn-primary" onclick="saveAndContinue()"><span class="material-symbols-outlined" style="font-size:18px">save</span>Simpan &amp; Lanjutkan ke Generator</button>
+                </div>
+
+                <div class="csp-footer">
+                    <div class="footer-left"><span class="version">Academic Precision v2.4.0</span><span>© 2024 University Polytechnic Scheduling System.</span><span style="color:#9ca3af">All rights reserved.</span></div>
+                    <div class="footer-right">
+                        <a onclick="showToast('info','Institutional Privacy settings')">Institutional Privacy</a>
+                        <a onclick="showToast('info','Accessibility settings')">Accessibility</a>
+                        <a onclick="showToast('info','System Status: All systems operational')">System Status</a>
+                        <a onclick="showToast('info','Technical Support: support@polines.ac.id')">Technical Support</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generator -->
+            <div id="adminGeneratorSection" class="section-hidden">
+                <h3 style="font-size:18px;font-weight:600;color:#1f2937;margin-bottom:16px;">Eksekusi Algoritma GA + CSP</h3>
+                <div style="background:white;border-radius:12px;border:1px solid #e5e7eb;padding:32px;text-align:center;">
+                    <p style="color:#6b7280;margin-bottom:24px;">Algoritma Genetika akan mengoptimasi jadwal untuk mencapai Zero Conflict</p>
+                    <button onclick="runGenerator()" style="background:#1a3a7a;color:white;border:none;padding:14px 40px;border-radius:999px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                        <span class="material-symbols-outlined" style="vertical-align:middle">bolt</span> GENERATE JADWAL
+                    </button>
+                    <div style="margin-top:24px;background:#0f172a;border-radius:8px;padding:16px;text-align:left;font-family:monospace;font-size:13px;min-height:200px;color:#10b981;" id="terminal">
+                        <p style="color:rgba(255,255,255,0.2)">Awaiting generation command...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule -->
+            <div id="adminScheduleSection" class="section-hidden">
+                <h3 style="font-size:18px;font-weight:600;color:#1f2937;margin-bottom:16px;">Hasil Jadwal</h3>
+                <div style="background:white;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+                    <table style="width:100%;font-size:14px;border-collapse:collapse;">
+                        <thead style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+                        <tr><th style="padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;">Hari</th>
+                            <th style="padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;">Waktu</th>
+                            <th style="padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;">MK</th>
+                            <th style="padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;">Dosen</th>
+                            <th style="padding:12px 20px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;">Ruang</th>
+                        </tr>
+                        </thead>
+                        <tbody id="scheduleBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- ============================================================
+DOSEN DASHBOARD
+============================================================ -->
+<div id="dosenApp">
+    <div class="flex min-h-screen">
+
+        <!-- Sidebar Dosen -->
+        <aside class="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-[#e5e7eb] shadow-sm flex flex-col overflow-y-auto px-4 py-6 z-50">
+            <div class="mb-8 px-2 flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#00236f] rounded-lg flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL'1">account_balance</span>
+                </div>
+                <div><h1 class="text-lg font-bold text-[#00236f]">Politeknik Portal</h1><p class="text-[11px] font-semibold text-[#444651] opacity-70 tracking-wide">SISTEM INFORMASI AKADEMIK</p></div>
+            </div>
+
+            <nav class="flex-1 space-y-1.5">
+                <div class="nav-link active" id="nav-dosen-dashboard" onclick="switchDosenView('dashboard')">
+                    <span class="material-symbols-outlined">dashboard</span><span>Dashboard</span>
+                </div>
+                <div class="nav-link" id="nav-dosen-schedule" onclick="switchDosenView('schedule')">
+                    <span class="material-symbols-outlined">calendar_today</span><span>Jadwal Mengajar</span>
+                </div>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-[#e5e7eb]">
+                <div class="flex items-center gap-3 px-2 mb-4">
+                    <img class="w-12 h-12 rounded-full object-cover border-2 border-[#00236f]/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjPoyggbXaMcNTen4zEPAck-ttOLLrWKH0maRENFJgutqsvwedn4F5XFwwygKdmBJAi4vAHQHBVXP5kitFmnf_eNMRgxqOQw7-coinhdFJMV23spEogoS8URWHYcak7AvF-PfTYnI_BC0N6GbFJc13SUDDGtyTPEfM-SGiKh2zkTBmfASI9Xp1ndikC2A87W0QJgdaMvfkEMobYcgAFaztpuCo1t_ezQpXaDwdilSqpTwuR9YmCB_7PBbQBuvkQDDLTkFjpwXQfsMk" alt="Dosen" />
+                    <div class="overflow-hidden"><p class="text-sm font-semibold truncate text-[#00236f]">Dr. Ir. Suharyanto</p><p class="text-[10px] font-semibold text-[#444651]">NIP: 197805122005011002</p></div>
+                </div>
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[#ba1a1a] border border-[#ba1a1a]/20 rounded-lg hover:bg-[#ba1a1a]/5 transition-all text-sm font-semibold">
+                    <span class="material-symbols-outlined text-[18px]">logout</span><span>Log Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Dosen -->
+        <div class="ml-[280px] flex-1 min-h-screen flex flex-col">
+
+            <header class="sticky top-0 z-40 h-16 px-6 bg-white border-b border-[#e5e7eb] flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <h2 class="text-xl font-extrabold text-[#00236f]">Portal Dosen</h2>
+                    <div class="h-6 w-px bg-[#e5e7eb] mx-2"></div>
+                    <div class="bg-[#f3f4f6] px-3 py-1 rounded flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-[#059669] animate-pulse"></span>
+                        <span class="text-[10px] font-bold text-[#00236f]">Tahun Ajaran 2023/2024 Genap</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="relative hidden md:block">
+                        <input class="bg-[#f3f4f6] border-none rounded-full px-5 py-2 text-sm w-64 focus:ring-2 focus:ring-[#00236f]/20 transition-all outline-none" placeholder="Cari data akademik..." type="text" />
+                        <span class="material-symbols-outlined absolute right-3 top-2 text-[#444651] text-[20px]">search</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="relative text-[#444651] hover:text-[#00236f] transition-colors" onclick="showToast('info','Notifikasi: 3 pesan baru.')">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-[#ba1a1a] text-white text-[10px] rounded-full flex items-center justify-center font-bold">3</span>
+                        </button>
+                        <button class="text-[#444651] hover:text-[#00236f] transition-colors" onclick="showToast('info','Pusat Bantuan tersedia.')">
+                            <span class="material-symbols-outlined">help_outline</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 space-y-6 max-w-[1280px] mx-auto w-full">
+
+                <!-- Dosen: Dashboard View -->
+                <div id="dosenViewDashboard">
+                    <section class="relative overflow-hidden bg-[#1e3a8a] rounded-xl p-8 text-white shadow-lg">
+                        <div class="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
+                            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="white" d="M45.6,-76.5C58.3,-68.2,67.2,-52.4,74.1,-36.6C81,-20.8,85.8,-5,83.2,10.2C80.6,25.4,70.6,40,58.8,52.8C47,65.6,33.4,76.6,17.6,81.4C1.8,86.2,-16.2,84.8,-31.8,78.4C-47.4,72,-60.6,60.6,-71.8,46.2C-83,31.8,-92.2,14.4,-90.8,-2.8C-89.4,-20,-77.4,-36.8,-64.2,-50.2C-51,-63.6,-36.6,-73.6,-20.8,-78.6C-5,-83.6,12,-80.4,29.4,-76.2C46.8,-72,45.6,-76.5,45.6,-76.5Z" transform="translate(100 100)"/></svg>
+                        </div>
+                        <div class="relative z-10">
+                            <p class="text-[11px] font-semibold text-white/70 mb-2 uppercase tracking-widest">Selamat Datang</p>
+                            <h2 class="text-2xl md:text-3xl font-bold mb-2">Dr. Ir. Suharyanto, M.T.</h2>
+                            <p class="text-sm text-white/80 max-w-2xl">Anda memiliki 3 sesi mengajar hari ini. Pastikan untuk melakukan presensi mahasiswa di setiap akhir sesi. Tetap semangat menginspirasi mahasiswa Polines!</p>
+                            <div class="mt-6 flex gap-4">
+                                <button onclick="switchDosenView('schedule')" class="bg-white text-[#00236f] px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-white/90 transition-all shadow-sm">Lihat Jadwal Hari Ini</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5e7eb] card-hover">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-12 h-12 bg-[#00236f]/10 text-[#00236f] rounded-lg flex items-center justify-center"><span class="material-symbols-outlined text-[32px]">school</span></div>
+                                <span class="text-[11px] font-bold text-[#059669] bg-[#059669]/10 px-2 py-1 rounded">Optimal</span>
+                            </div>
+                            <h3 class="text-[11px] font-bold text-[#444651] uppercase tracking-wider mb-1">TOTAL BEBAN SKS</h3>
+                            <div class="flex items-baseline gap-2"><span class="text-4xl font-bold text-[#00236f]">21</span><span class="text-sm text-[#444651]">SKS</span></div>
+                            <div class="mt-4 w-full bg-[#edeef0] h-1.5 rounded-full overflow-hidden"><div class="bg-[#00236f] h-full rounded-full" style="width:85%"></div></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5e7eb] card-hover">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-12 h-12 bg-[#0058be]/10 text-[#0058be] rounded-lg flex items-center justify-center"><span class="material-symbols-outlined text-[32px]">menu_book</span></div>
+                                <span class="text-[11px] font-bold text-[#0058be] bg-[#0058be]/10 px-2 py-1 rounded">Semester Genap</span>
+                            </div>
+                            <h3 class="text-[11px] font-bold text-[#444651] uppercase tracking-wider mb-1">JUMLAH MATA KULIAH</h3>
+                            <div class="flex items-baseline gap-2"><span class="text-4xl font-bold text-[#00236f]">7</span><span class="text-sm text-[#444651]">Mata Kuliah</span></div>
+                            <p class="mt-4 text-sm text-[#444651] flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">info</span>Tersebar di 3 Program Studi</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5e7eb] card-hover">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-12 h-12 bg-[#059669]/10 text-[#059669] rounded-lg flex items-center justify-center"><span class="material-symbols-outlined text-[32px]" style="font-variation-settings:'FILL'1">verified</span></div>
+                                <span class="text-[11px] font-bold text-[#00236f] bg-[#00236f]/10 px-2 py-1 rounded">Update: 2 Jam Lalu</span>
+                            </div>
+                            <h3 class="text-[11px] font-bold text-[#444651] uppercase tracking-wider mb-1">STATUS JADWAL</h3>
+                            <div class="flex items-baseline gap-2"><span class="text-4xl font-bold text-[#059669]">Terverifikasi</span></div>
+                            <p class="mt-4 text-sm text-[#444651] flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-[#059669]">check_circle</span>Sinkronisasi dengan Kalender Akademik Aman</p>
+                        </div>
+                    </section>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <section class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-[#e5e7eb] overflow-hidden">
+                            <div class="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center">
+                                <h3 class="text-lg font-bold text-[#00236f]">Ringkasan Beban Mengajar</h3>
+                                <div class="flex gap-2">
+                                    <button class="p-2 hover:bg-[#f3f4f6] rounded transition-colors" onclick="showToast('info','Filter tersedia.')"><span class="material-symbols-outlined">filter_list</span></button>
+                                    <button class="p-2 hover:bg-[#f3f4f6] rounded transition-colors" onclick="showToast('info','Unduh data dalam format CSV.')"><span class="material-symbols-outlined">download</span></button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead><tr class="bg-[#f3f4f6]">
+                                        <th class="px-6 py-4 text-[11px] font-bold text-[#444651] uppercase tracking-wider">Mata Kuliah</th>
+                                        <th class="px-6 py-4 text-[11px] font-bold text-[#444651] uppercase tracking-wider">Kelas</th>
+                                        <th class="px-6 py-4 text-[11px] font-bold text-[#444651] uppercase tracking-wider">SKS</th>
+                                        <th class="px-6 py-4 text-[11px] font-bold text-[#444651] uppercase tracking-wider">Jadwal (Hari/Jam)</th>
+                                        <th class="px-6 py-4 text-[11px] font-bold text-[#444651] uppercase tracking-wider">Aksi</th>
+                                    </tr></thead>
+                                    <tbody class="divide-y divide-[#e5e7eb]">
+                                    <tr class="hover:bg-[#f8f9fb] transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-[#00236f]/5 flex items-center justify-center text-[#00236f] font-bold text-xs">TI</div><span class="text-sm font-medium text-[#00236f]">Pemrograman Web Lanjut</span></div></td><td class="px-6 py-4"><span class="text-sm text-[#444651]">IK-3A</span></td><td class="px-6 py-4"><span class="text-sm font-semibold text-[#00236f]">4</span></td><td class="px-6 py-4"><div class="flex flex-col"><span class="text-sm font-medium text-[#191c1e]">Senin</span><span class="text-xs text-[#444651] opacity-70">08:00 - 11:40</span></div></td><td class="px-6 py-4"><button class="text-[#00236f] hover:underline text-[11px] font-bold" onclick="showToast('info','Detail mata kuliah.')">DETAIL</button></td></tr>
+                                    <tr class="hover:bg-[#f8f9fb] transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-[#00236f]/5 flex items-center justify-center text-[#00236f] font-bold text-xs">TI</div><span class="text-sm font-medium text-[#00236f]">Kecerdasan Buatan</span></div></td><td class="px-6 py-4"><span class="text-sm text-[#444651]">IK-3B</span></td><td class="px-6 py-4"><span class="text-sm font-semibold text-[#00236f]">3</span></td><td class="px-6 py-4"><div class="flex flex-col"><span class="text-sm font-medium text-[#191c1e]">Selasa</span><span class="text-xs text-[#444651] opacity-70">13:00 - 15:30</span></div></td><td class="px-6 py-4"><button class="text-[#00236f] hover:underline text-[11px] font-bold" onclick="showToast('info','Detail mata kuliah.')">DETAIL</button></td></tr>
+                                    <tr class="hover:bg-[#f8f9fb] transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-[#00236f]/5 flex items-center justify-center text-[#00236f] font-bold text-xs">EL</div><span class="text-sm font-medium text-[#00236f]">Sistem Mikrokontroler</span></div></td><td class="px-6 py-4"><span class="text-sm text-[#444651]">EL-2A</span></td><td class="px-6 py-4"><span class="text-sm font-semibold text-[#00236f]">3</span></td><td class="px-6 py-4"><div class="flex flex-col"><span class="text-sm font-medium text-[#191c1e]">Rabu</span><span class="text-xs text-[#444651] opacity-70">07:00 - 09:30</span></div></td><td class="px-6 py-4"><button class="text-[#00236f] hover:underline text-[11px] font-bold" onclick="showToast('info','Detail mata kuliah.')">DETAIL</button></td></tr>
+                                    <tr class="hover:bg-[#f8f9fb] transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-[#00236f]/5 flex items-center justify-center text-[#00236f] font-bold text-xs">TI</div><span class="text-sm font-medium text-[#00236f]">Proyek Akhir I</span></div></td><td class="px-6 py-4"><span class="text-sm text-[#444651]">IK-4C</span></td><td class="px-6 py-4"><span class="text-sm font-semibold text-[#00236f]">4</span></td><td class="px-6 py-4"><div class="flex flex-col"><span class="text-sm font-medium text-[#191c1e]">Kamis</span><span class="text-xs text-[#444651] opacity-70">08:00 - 12:00</span></div></td><td class="px-6 py-4"><button class="text-[#00236f] hover:underline text-[11px] font-bold" onclick="showToast('info','Detail mata kuliah.')">DETAIL</button></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="p-4 bg-[#f8f9fb] border-t border-[#e5e7eb] text-center">
+                                <button class="text-[#00236f] font-semibold text-sm hover:underline" onclick="showToast('info','Menampilkan semua mata kuliah.')">Tampilkan Semua Mata Kuliah</button>
+                            </div>
+                        </section>
+
+                        <aside class="space-y-4">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5e7eb]">
+                                <h3 class="text-[11px] font-bold text-[#444651] uppercase tracking-wider mb-6 border-b border-[#e5e7eb] pb-3">AKSI CEPAT</h3>
+                                <div class="space-y-3">
+                                    <button onclick="switchDosenView('schedule')" class="w-full flex items-center gap-3 px-4 py-3 bg-[#00236f] text-white rounded-lg hover:bg-[#1e3a8a] transition-all active:scale-[0.98]">
+                                        <span class="material-symbols-outlined">event_note</span><span class="text-sm font-medium">Lihat Jadwal Full</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl shadow-lg border border-[#334155] overflow-hidden flex flex-col h-64">
+                                <div class="bg-[#1e293b] px-4 py-2 flex items-center justify-between">
+                                    <div class="flex gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-[#dc2626]"></div><div class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></div><div class="w-2.5 h-2.5 rounded-full bg-[#059669]"></div></div>
+                                    <span class="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest">System Logs</span>
+                                </div>
+                                <div class="p-4 flex-1 overflow-y-auto font-mono text-[13px] text-[#10b981] space-y-2 terminal-scroll" id="terminalLog">
+                                    <p class="opacity-60">[08:45:12] Logging into SIDOS system...</p>
+                                    <p>[08:45:15] <span class="text-white">Authenticated: Dr. Ir. Suharyanto</span></p>
+                                    <p class="opacity-60">[09:02:44] Fetching latest schedule updates...</p>
+                                    <p>[09:02:46] <span class="text-[#d97706]">Sync Warning: Lab TI-04 rescheduled.</span></p>
+                                    <p class="opacity-60">[10:15:22] Auto-saving grading draft for IK-3A...</p>
+                                    <div class="animate-pulse">_</div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <!-- Dosen: Schedule View -->
+                <div id="dosenViewSchedule" class="hidden-view">
+                    <section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-[#00236f] mb-2">Jadwal Mengajar</h3>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="px-3 py-1 bg-[#1e3a8a] text-white rounded-full text-[11px] font-bold">Semester Ganjil 2024/2025</span>
+                                <span class="flex items-center gap-1 text-[#444651] text-sm"><span class="material-symbols-outlined text-sm">analytics</span>Beban Kerja: <span class="font-bold text-[#00236f]">21 SKS</span></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 flex-wrap">
+                            <button onclick="showToast('info','Sinkronisasi kalender berhasil.')" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#e5e7eb] rounded-lg text-[#444651] hover:bg-[#f3f4f6] transition-all text-[11px] font-bold">
+                                <span class="material-symbols-outlined text-lg">sync</span>Sinkronkan Kalender
+                            </button>
+                            <button onclick="showToast('info','Mengunduh PDF jadwal...')" class="flex items-center gap-2 px-5 py-2.5 bg-[#00236f] text-white rounded-lg hover:opacity-90 transition-all text-[11px] font-bold shadow-sm">
+                                <span class="material-symbols-outlined text-lg">picture_as_pdf</span>Cetak Jadwal (PDF)
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <!-- Senin -->
+                        <div class="flex flex-col gap-4"><div class="bg-[#e7e8ea] p-3 rounded-lg text-center text-[11px] font-bold text-[#00236f] border-b-2 border-[#00236f]">SENIN</div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Tanpa Bentrok</div><p class="text-[10px] font-bold text-[#0058be] mb-1">08:00 - 11:40</p><h4 class="text-sm font-bold mb-3">Pemrograman Web Lanjut</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Lab Komputer 4</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>TI-3A</p></div></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden opacity-50 border-dashed schedule-card"><p class="text-center text-[#444651] text-[11px] font-bold py-4">Tidak ada sesi sore</p></div>
+                        </div>
+                        <!-- Selasa -->
+                        <div class="flex flex-col gap-4"><div class="bg-[#e7e8ea] p-3 rounded-lg text-center text-[11px] font-bold text-[#00236f] border-b-2 border-[#00236f]">SELASA</div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Aman</div><p class="text-[10px] font-bold text-[#0058be] mb-1">08:00 - 10:30</p><h4 class="text-sm font-bold mb-3">Sistem Terdistribusi</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Ruang Teori 2.1</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>TI-3C</p></div></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Tanpa Bentrok</div><p class="text-[10px] font-bold text-[#0058be] mb-1">13:00 - 16:30</p><h4 class="text-sm font-bold mb-3">Proyek Akhir 1</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Lab Software 1</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>TI-4A</p></div></div>
+                        </div>
+                        <!-- Rabu -->
+                        <div class="flex flex-col gap-4"><div class="bg-[#e7e8ea] p-3 rounded-lg text-center text-[11px] font-bold text-[#00236f] border-b-2 border-[#00236f]">RABU</div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Aman</div><p class="text-[10px] font-bold text-[#0058be] mb-1">08:00 - 11:40</p><h4 class="text-sm font-bold mb-3">Kecerdasan Buatan</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Lab AI &amp; Robotik</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>TI-3B</p></div></div>
+                        </div>
+                        <!-- Kamis -->
+                        <div class="flex flex-col gap-4"><div class="bg-[#e7e8ea] p-3 rounded-lg text-center text-[11px] font-bold text-[#00236f] border-b-2 border-[#00236f]">KAMIS</div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Aman</div><p class="text-[10px] font-bold text-[#0058be] mb-1">10:00 - 12:30</p><h4 class="text-sm font-bold mb-3">Etika Profesi IT</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Auditorium 1</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>Gabungan TI-3</p></div></div>
+                        </div>
+                        <!-- Jumat -->
+                        <div class="flex flex-col gap-4"><div class="bg-[#e7e8ea] p-3 rounded-lg text-center text-[11px] font-bold text-[#00236f] border-b-2 border-[#00236f]">JUMAT</div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-[#e5e7eb] relative overflow-hidden schedule-card"><div class="absolute top-0 right-0 p-1 px-2 bg-[#059669]/10 text-[#059669] text-[10px] font-bold rounded-bl-lg">Tanpa Bentrok</div><p class="text-[10px] font-bold text-[#0058be] mb-1">08:00 - 11:00</p><h4 class="text-sm font-bold mb-3">Workshop Framework</h4><div class="space-y-1.5 text-[#444651] text-sm"><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">room</span>Lab Komputer 1</p><p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">groups</span>TI-2A</p></div></div>
+                        </div>
+                    </section>
+                </div>
+
+            </main>
+
+            <footer class="mt-auto border-t border-[#e5e7eb] bg-white flex flex-col md:flex-row justify-between items-center py-4 px-6 text-xs text-[#444651] font-medium">
+                <p>© 2024 Politeknik Negeri Semarang - Sistem Manajemen Akademik Terintegrasi</p>
+                <div class="flex gap-6 mt-2 md:mt-0">
+                    <a class="hover:text-[#00236f] hover:underline transition-all cursor-pointer" onclick="showToast('info','Panduan pengguna.')">Panduan Pengguna</a>
+                    <a class="hover:text-[#00236f] hover:underline transition-all cursor-pointer" onclick="showToast('info','Kontak IT Support.')">Kontak IT Support</a>
+                    <a class="hover:text-[#00236f] hover:underline transition-all cursor-pointer" onclick="showToast('info','Kebijakan privasi.')">Kebijakan Privasi</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+MAHASISWA DASHBOARD
+============================================================ -->
+<div id="studentDashboardPage" class="min-height-100vh bg-[#f4f6fa]">
+    <div class="flex min-h-screen">
+
+        <!-- Sidebar Mahasiswa -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between py-6 px-4 z-20">
+            <div>
+                <div class="px-2 mb-8 flex items-center gap-3">
+                    <div class="w-8 h-8 bg-[#1a3a7a] rounded flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl">school</span></div>
+                    <div><h1 class="text-base font-bold text-[#1a3a7a] leading-tight">Polytechnic</h1><p class="text-[10px] text-gray-500">Academic Management</p></div>
+                </div>
+                <nav class="space-y-1">
+                    <a id="nav-mhs-overview" onclick="switchMhsView('overview')" class="flex items-center gap-3 px-4 py-3 bg-[#0d347c] text-white rounded-lg text-sm font-semibold shadow-sm cursor-pointer transition-colors">
+                        <span class="material-symbols-outlined text-xl">dashboard</span><span>Overview</span>
+                    </a>
+                    <a id="nav-mhs-schedule" onclick="switchMhsView('schedule')" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                        <span class="material-symbols-outlined text-xl">calendar_month</span><span>My Schedule</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="space-y-3">
+                <a onclick="handleLogout()" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-red-600 rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-xl">logout</span><span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Mahasiswa -->
+        <main class="flex-1 flex flex-col relative h-screen overflow-hidden">
+
+            <header class="bg-white border-b border-gray-200 h-16 flex justify-between items-center px-8 flex-shrink-0 z-10">
+                <h2 class="text-lg font-bold text-[#1a3a7a]">Academic Portal</h2>
+                <div class="flex items-center gap-6 h-full">
+                    <div class="flex h-full text-sm">
+                        <button class="px-5 h-full border-b-2 border-[#1a3a7a] font-bold text-[#1a3a7a]">Dashboard</button>
+                    </div>
+                    <div class="flex items-center gap-5 text-gray-400 border-l pl-6 border-gray-200 h-8">
+                        <span class="material-symbols-outlined cursor-pointer hover:text-gray-600 text-[22px]">notifications</span>
+                        <span class="material-symbols-outlined cursor-pointer hover:text-gray-600 text-[22px]">help</span>
+                        <div class="flex items-center gap-2.5 cursor-pointer ml-1">
+                            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=100" alt="Budi Santoso" class="w-7 h-7 rounded-full border border-gray-300 object-cover" />
+                            <span class="text-sm font-bold text-gray-800">Budi Santoso</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 relative flex flex-col">
+
+                <!-- Mahasiswa: Overview -->
+                <div id="mhsViewOverview" class="flex flex-col lg:flex-row gap-6 flex-1 w-full">
+                    <div class="flex-1 space-y-6">
+                        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden flex shadow-sm">
+                            <div class="w-48 bg-cover bg-center" style="background-image:url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=500');"></div>
+                            <div class="flex-1 p-6 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-start">
+                                        <div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Profil Mahasiswa</p><h3 class="text-2xl font-extrabold text-[#1a3a7a] mt-1">Budi Santoso</h3></div>
+                                        <span class="bg-[#e6f4ea] text-[#137333] text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#137333]"></span>Terdaftar & Aktif</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-y-4 gap-x-8 mt-5">
+                                        <div><p class="text-[10px] text-gray-400 font-semibold uppercase">NIM</p><p class="text-sm font-bold text-gray-800 mt-0.5">2101020304</p></div>
+                                        <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Program Studi</p><p class="text-sm font-bold text-gray-800 mt-0.5">D3 Teknik Informatika</p></div>
+                                        <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Angkatan</p><p class="text-sm font-bold text-gray-800 mt-0.5">2021</p></div>
+                                        <div><p class="text-[10px] text-gray-400 font-semibold uppercase">IPK Terakhir</p><p class="text-sm font-bold text-blue-600 mt-0.5">3.85 / 4.00</p></div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 border-t border-gray-100 pt-4 mt-4 text-xs font-semibold text-gray-500">
+                                    <button class="flex items-center gap-1 hover:text-[#1a3a7a]"><span class="material-symbols-outlined text-sm">edit</span>Ubah Profil</button>
+                                    <button class="flex items-center gap-1 hover:text-[#1a3a7a]"><span class="material-symbols-outlined text-sm">badge</span>Cetak KTM Digital</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="font-bold text-[#1a3a7a] text-base">Jadwal Kuliah Terbaru</h4>
+                                <div class="flex items-center gap-3">
+                                    <button class="p-1.5 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined text-base">chevron_left</span></button>
+                                    <span class="text-xs font-bold text-gray-800">Senin, 24 Mei</span>
+                                    <button class="p-1.5 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined text-base">chevron_right</span></button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead><tr class="bg-gray-50 text-gray-400 font-bold uppercase border-b border-gray-100">
+                                        <th class="py-3 px-4">Jam</th><th class="py-3 px-4">Mata Kuliah</th><th class="py-3 px-4">Ruang</th><th class="py-3 px-4">Dosen</th><th class="py-3 px-4 text-center">Status</th>
+                                    </tr></thead>
+                                    <tbody class="divide-y divide-gray-100 text-gray-700 font-medium">
+                                    <tr><td class="py-4 px-4 font-bold text-[#1a3a7a]">08:00<br /><span class="text-gray-400 font-normal">- 10:30</span></td><td class="py-4 px-4 font-bold text-gray-800">Pemrograman Web Framework<br /><span class="text-gray-400 font-normal text-[11px]">TI-21-A</span></td><td class="py-4 px-4 text-gray-600">Lab Komputer 4</td><td class="py-4 px-4 text-gray-600">Dr. Irwan Santoso</td><td class="py-4 px-4 text-center"><span class="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded">Tatap Muka</span></td></tr>
+                                    <tr><td class="py-4 px-4 font-bold text-[#1a3a7a]">10:45<br /><span class="text-gray-400 font-normal">- 13:15</span></td><td class="py-4 px-4 font-bold text-gray-800">Sistem Basis Data Lanjut<br /><span class="text-gray-400 font-normal text-[11px]">TI-21-A</span></td><td class="py-4 px-4 text-gray-600">Ruang Kuliah 3.1</td><td class="py-4 px-4 text-gray-600">Siti Aminah, M.Kom</td><td class="py-4 px-4 text-center"><span class="bg-orange-50 text-orange-600 font-bold px-2.5 py-1 rounded">Sedang Berjalan</span></td></tr>
+                                    <tr><td class="py-4 px-4 font-bold text-[#1a3a7a]">14:00<br /><span class="text-gray-400 font-normal">- 16:30</span></td><td class="py-4 px-4 font-bold text-gray-800">Etika Profesi IT<br /><span class="text-gray-400 font-normal text-[11px]">TI-21-A</span></td><td class="py-4 px-4 text-gray-600">Ruang Seminar 1</td><td class="py-4 px-4 text-gray-600">Bambang Pamungkas, M.T</td><td class="py-4 px-4 text-center"><span class="bg-gray-100 text-gray-500 font-bold px-2.5 py-1 rounded">Mendatang</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full lg:w-80 space-y-6">
+                        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 relative overflow-hidden flex flex-col justify-between" style="min-height:140px;">
+                            <div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Progress Kelulusan</p>
+                                <div class="flex items-baseline gap-2"><span class="text-2xl font-black text-gray-800">62%</span></div>
+                                <p class="text-[11px] text-gray-400 mt-1">84 dari 144 SKS terselesaikan</p>
+                                <div class="w-full bg-gray-100 h-2 rounded-full mt-3 overflow-hidden"><div class="bg-[#1a3a7a] h-full rounded-full" style="width:62%;"></div></div>
+                            </div>
+                            <span class="material-symbols-outlined absolute right-2 bottom-2 text-gray-100" style="font-size:72px;z-index:0;pointer-events:none;">school</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mahasiswa: Schedule -->
+                <div id="mhsViewSchedule" class="hidden-view flex flex-col gap-6 w-full pb-16">
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center shadow-sm gap-6 lg:gap-0">
+                        <div><h2 class="text-3xl font-bold text-[#1a3a7a] mb-1">Jadwal Saya</h2><p class="text-sm text-gray-500 font-medium">Jadwal Perkuliahan Semester Ganjil<br />2024/2025</p></div>
+                        <div class="flex gap-6 items-stretch">
+                            <div class="border border-gray-200 rounded-xl flex divide-x divide-gray-200 bg-white shadow-sm">
+                                <div class="px-5 py-3 flex flex-col justify-center"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Program Studi</p><p class="text-sm font-bold text-[#1a3a7a]">D3 Teknik Informatika</p></div>
+                                <div class="px-5 py-3 flex flex-col justify-center bg-gray-50/50 rounded-r-xl"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Angkatan</p><p class="text-sm font-bold text-[#1a3a7a]">2021</p></div>
+                            </div>
+                            <div class="bg-[#143474] rounded-xl p-4 text-white flex flex-col justify-center min-w-[180px] shadow-md relative overflow-hidden">
+                                <div class="relative z-10"><p class="text-[9px] font-bold text-blue-200 uppercase tracking-wider mb-1">Beban Akademik</p><div class="flex items-baseline gap-2 mb-3"><span class="text-4xl font-bold tracking-tight">22</span><span class="text-xs font-medium text-blue-100">Total SKS</span></div><div class="bg-[#244b9e] rounded text-[10px] font-medium py-1 px-2.5 flex items-center gap-1.5 w-max"><span class="material-symbols-outlined text-[14px]">verified</span>Status: Terverifikasi</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white">
+                            <div class="flex gap-1 bg-gray-100/50 p-1 rounded-lg border border-gray-100">
+                                <button class="bg-[#0d347c] text-white text-[11px] font-semibold px-4 py-1.5 rounded-md shadow-sm">Weekly Grid</button>
+                                <button class="text-gray-500 hover:text-gray-800 text-[11px] font-semibold px-4 py-1.5 rounded-md transition-colors">List View</button>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-gray-400 text-[11px] font-medium"><span class="material-symbols-outlined text-[16px]">info</span>Waktu dalam WIB (UTC+7)</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-center border-collapse min-w-[900px] table-fixed">
+                                <thead><tr class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50/50">
+                                    <th class="py-3 px-2 border-b border-r border-gray-100 w-24 font-medium text-left pl-6">TIME</th>
+                                    <th class="py-3 border-b border-r border-gray-100">SENIN</th>
+                                    <th class="py-3 border-b border-r border-gray-100">SELASA</th>
+                                    <th class="py-3 border-b border-r border-gray-100">RABU</th>
+                                    <th class="py-3 border-b border-r border-gray-100">KAMIS</th>
+                                    <th class="py-3 border-b border-gray-100">JUMAT</th>
+                                </tr></thead>
+                                <tbody class="text-xs text-gray-400 relative bg-white">
+                                <tr><td class="border-b border-r border-gray-100 h-24 align-top pt-3 pl-6 text-left">08:00</td><td class="border-b border-r border-gray-100 relative"></td>
+                                    <td class="border-b border-r border-gray-100 relative"><div class="absolute top-2 left-2 right-2 h-[170px] border-l-[3px] border-[#1a3a7a] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] rounded-r-md p-3.5 text-left z-10 flex flex-col gap-1"><h4 class="font-bold text-[#1a3a7a] text-[11px] leading-snug">Pemrograman Web Framework</h4><p class="text-[10px] text-gray-500">Lab Komputer 04</p><div class="mt-auto flex items-center gap-1 text-[9px] font-bold text-[#059669]"><span class="material-symbols-outlined text-[13px] text-[#059669]">check_circle</span>Aman / No Conflict</div></div></td>
+                                    <td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-gray-100 relative"></td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-24 align-top pt-3 pl-6 text-left">09:00</td>
+                                    <td class="border-b border-r border-gray-100 relative"><div class="absolute top-2 left-2 right-2 h-[100px] border-l-[3px] border-[#1a3a7a] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] rounded-r-md p-3.5 text-left z-10 flex flex-col gap-1"><h4 class="font-bold text-[#1a3a7a] text-[11px] leading-snug">Sistem Basis Data Lanjut</h4><p class="text-[10px] text-gray-500">Ruang Teori 2.1</p><div class="mt-auto flex items-center gap-1 text-[9px] font-bold text-[#059669]"><span class="material-symbols-outlined text-[13px] text-[#059669]">check_circle</span>Aman / No Conflict</div></div></td>
+                                    <td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-gray-100 relative"></td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-24 align-top pt-3 pl-6 text-left">10:00</td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td>
+                                    <td class="border-b border-r border-gray-100 relative"><div class="absolute top-2 left-2 right-2 h-[100px] border-l-[3px] border-[#6b3112] bg-[#faf8f5] shadow-[0_2px_12px_rgba(0,0,0,0.06)] rounded-r-md p-3.5 text-left z-10 flex flex-col gap-1"><h4 class="font-bold text-[#1a3a7a] text-[11px] leading-snug">Etika Profesi IT</h4><p class="text-[10px] text-gray-500">Gedung Utama Lt. 3</p><div class="mt-auto flex items-center gap-1 text-[9px] font-bold text-[#059669]"><span class="material-symbols-outlined text-[13px] text-[#059669]">check_circle</span>Aman / No Conflict</div></div></td>
+                                    <td class="border-b border-gray-100 relative"></td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-24 align-top pt-3 pl-6 text-left">11:00</td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-gray-100 relative"></td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-14 align-middle text-left pl-6">12:00</td><td colspan="5" class="border-b border-gray-100 bg-gray-50/80 text-[11px] font-bold text-gray-400 tracking-widest uppercase">ISTIRAHAT & SHOLAT</td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-20 align-top pt-3 pl-6 text-left">13:00</td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-gray-100 relative"></td></tr>
+                                <tr><td class="border-b border-r border-gray-100 h-20 align-top pt-3 pl-6 text-left">14:00</td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-r border-gray-100 relative"></td><td class="border-b border-gray-100 relative"></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 shadow-sm"><div class="w-10 h-10 rounded-lg bg-[#f0f4ff] flex items-center justify-center text-[#1a3a7a] flex-shrink-0"><span class="material-symbols-outlined text-xl">description</span></div><div><h4 class="font-bold text-[#1a3a7a] text-sm">Tugas Mandiri</h4><p class="text-[11px] text-gray-500 font-medium mt-0.5">3 Segera Dikumpulkan</p></div></div>
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 shadow-sm"><div class="w-10 h-10 rounded-lg bg-[#fff5eb] flex items-center justify-center text-[#ea580c] flex-shrink-0"><span class="material-symbols-outlined text-xl">event_available</span></div><div><h4 class="font-bold text-[#1a3a7a] text-sm">Presensi Kuliah</h4><p class="text-[11px] text-gray-500 font-medium mt-0.5">Kehadiran 98%</p></div></div>
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 shadow-sm"><div class="w-10 h-10 rounded-lg bg-[#f3f0ff] flex items-center justify-center text-[#6366f1] flex-shrink-0"><span class="material-symbols-outlined text-xl">notifications_active</span></div><div><h4 class="font-bold text-[#1a3a7a] text-sm">Pesan Prodi</h4><p class="text-[11px] text-gray-500 font-medium mt-0.5">1 Pengumuman Baru</p></div></div>
+                    </div>
+
+                    <button class="fixed bottom-8 right-8 bg-[#0d347c] text-white w-14 h-14 rounded-xl shadow-xl flex items-center justify-center hover:bg-[#1a3a7a] hover:-translate-y-1 transition-all z-50">
+                        <span class="material-symbols-outlined">print</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <footer class="h-12 border-t border-gray-200 bg-white flex justify-between items-center px-8 text-[11px] text-gray-400 font-medium">
+                <p>© 2024 Politeknik Negeri Semarang. Academic Information System.</p>
+                <div class="flex gap-4">
+                    <a class="hover:underline cursor-pointer">Syarat & Ketentuan</a>
+                    <a class="hover:underline cursor-pointer">Pusat Bantuan</a>
+                    <a class="hover:underline cursor-pointer">Kontak IT</a>
+                </div>
+            </footer>
+        </main>
+    </div>
+</div>
+
+
+<!-- ============================================================
+JAVASCRIPT — ALL LOGIC
+============================================================ -->
+<script>
+    // ==========================================================
+    // 1. STATE & HELPERS
+    // ==========================================================
+    let selectedRole = 'dosen';
+
+    // Data untuk admin
+    const lecturers = [
+        { name: "Prof. Dr. Ahmad Rizal", sks: 24, nip: "198203152009121003" },
+        { name: "Dr. Ir. Siti Aminah", sks: 20, nip: "197501221998032001" },
+        { name: "Budi Setiawan, M.T.", sks: 18, nip: "198811052015041002" },
+        { name: "Dian Pertiwi, M.Kom.", sks: 22, nip: "199102282020122001" },
+        { name: "Ir. H. Bambang Eko, M.Kom", sks: 18 },
+        { name: "Dr. Sri Handayani, S.T., M.T.", sks: 22 },
+        { name: "Ahmad Rifai, M.Pd", sks: 14 },
+        { name: "Widyawati, S.Kom., M.Cs.", sks: 20 },
+    ];
+
+    const rooms = [
+        { name: "Ruang Teori A", type: "Theory" },
+        { name: "Lab Komputer 01", type: "Lab" },
+        { name: "Ruang Teori B", type: "Theory" },
+        { name: "Lab Elektronika", type: "Lab" },
+        { name: "R.3.1 (Teori)", type: "Theory" },
+        { name: "R.3.2 (Teori)", type: "Theory" },
+        { name: "Lab Jaringan", type: "Lab" },
+        { name: "Lab Pemrograman", type: "Lab" },
+    ];
+
+    const courses = [
+        { code: "MK001", name: "Algoritma Dasar", sks: 3 },
+        { code: "MK002", name: "Struktur Data", sks: 4 },
+        { code: "MK003", name: "Sistem Operasi", sks: 3 },
+        { code: "MK004", name: "Basis Data Lanjut", sks: 4 },
+        { code: "MK005", name: "Jaringan Komputer", sks: 3 },
+        { code: "IK101", name: "Pemrograman Dasar", sks: 3 },
+        { code: "IK102", name: "Basis Data I", sks: 4 },
+        { code: "IK203", name: "Jaringan Komputer", sks: 3 },
+    ];
+
+    let chartInstance = null;
+
+    // ==========================================================
+    // 2. TOAST
+    // ==========================================================
+    function showToast(type, message) {
+        const toast = document.getElementById('toast');
+        const title = document.getElementById('toastTitle');
+        const msg = document.getElementById('toastMessage');
+
+        toast.className = 'toast show';
+        if (type === 'success') { toast.className += ' toast-success';
+            title.textContent = '✓ Success'; } else if (type === 'error') { toast
+            .className += ' toast-error';
+            title.textContent = '✕ Error'; } else { title.textContent = 'ℹ Info'; }
+        msg.textContent = message;
+
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    // ==========================================================
+    // 3. LOGIN LOGIC
+    // ==========================================================
+    // Role selection
+    document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const role = this.dataset.role;
+            selectedRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const email = document.getElementById('email');
+            const pass = document.getElementById('password');
+            if (role === 'mahasiswa') {
+                email.value = 'budi@mahasiswa.polines.ac.id';
+                pass.value = 'mhs123';
+                email.placeholder = 'budi@mahasiswa.polines.ac.id';
+            } else if (role === 'admin') {
+                email.value = 'admin@polines.ac.id';
+                pass.value = 'admin123';
+                email.placeholder = 'admin@polines.ac.id';
+            } else {
+                email.value = 'dosen@polines.ac.id';
+                pass.value = 'dosen123';
+                email.placeholder = 'dosen@polines.ac.id';
+            }
+        });
+    });
+
+    function showHelpHint() {
+        if (selectedRole === 'mahasiswa') {
+            showToast('info', 'Gunakan budi@mahasiswa.polines.ac.id / mhs123');
+        } else if (selectedRole === 'admin') {
+            showToast('info', 'Gunakan admin@polines.ac.id / admin123');
+        } else {
+            showToast('info', 'Gunakan dosen@polines.ac.id / dosen123');
+        }
+    }
+
+    // Login submit
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const pass = document.getElementById('password').value.trim();
+
+        if (selectedRole === 'admin') {
+            if (email === 'admin@polines.ac.id' && pass === 'admin123') {
+                sessionStorage.setItem('polines_role', 'admin');
+                document.getElementById('loginPage').classList.add('hide');
+                document.getElementById('dashboardPage').classList.add('show');
+                document.getElementById('dosenApp').classList.remove('show');
+                document.getElementById('studentDashboardPage').classList.remove('show');
+                initAdminApp();
+                showToast('success', 'Login berhasil! Selamat datang Admin.');
+            } else {
+                showToast('error', 'Email atau password Admin salah!');
+            }
+        } else if (selectedRole === 'dosen') {
+            if (email === 'dosen@polines.ac.id' && pass === 'dosen123') {
+                sessionStorage.setItem('polines_role', 'dosen');
+                document.getElementById('loginPage').classList.add('hide');
+                document.getElementById('dosenApp').classList.add('show');
+                document.getElementById('dashboardPage').classList.remove('show');
+                document.getElementById('studentDashboardPage').classList.remove('show');
+                switchDosenView('dashboard');
+                initDosenTerminal();
+                loadDosenSchedule();
+                showToast('success', 'Login berhasil! Selamat datang Dr. Ir. Suharyanto.');
+            } else {
+                showToast('error', 'Email atau password Dosen salah!');
+            }
+        } else if (selectedRole === 'mahasiswa') {
+            if (email === 'budi@mahasiswa.polines.ac.id' && pass === 'mhs123') {
+                sessionStorage.setItem('polines_role', 'mahasiswa');
+                document.getElementById('loginPage').classList.add('hide');
+                document.getElementById('studentDashboardPage').classList.add('show');
+                document.getElementById('dashboardPage').classList.remove('show');
+                document.getElementById('dosenApp').classList.remove('show');
+                switchMhsView('overview');
+                loadMahasiswaSchedule();
+                showToast('success', 'Login berhasil! Selamat datang Budi Santoso.');
+            } else {
+                showToast('error', 'Email atau password Mahasiswa salah!');
+            }
+        }
+    });
+
+    // ==========================================================
+    // 4. LOGOUT
+    // ==========================================================
+    function handleLogout() {
+        sessionStorage.removeItem('polines_role');
+        document.getElementById('loginPage').classList.remove('hide');
+        document.getElementById('dashboardPage').classList.remove('show');
+        document.getElementById('dosenApp').classList.remove('show');
+        document.getElementById('studentDashboardPage').classList.remove('show');
+        showToast('info', 'Anda telah keluar dari sesi.');
+    }
+
+    // ==========================================================
+    // 5. ADMIN DASHBOARD
+    // ==========================================================
+    function showAdminSection(section) {
+        // Hide all admin sections
+        document.getElementById('adminDashboardSection').className = 'section-hidden';
+        document.getElementById('adminDataMasterSection').className = 'section-hidden data-master-container';
+        document.getElementById('adminCspRulesSection').className = 'section-hidden';
+        document.getElementById('adminGeneratorSection').className = 'section-hidden';
+        document.getElementById('adminScheduleSection').className = 'section-hidden';
+
+        // Remove active from all nav
+        document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+
+        const titles = {
+            dashboard: 'Dashboard',
+            'data-master': 'Data Master',
+            'csp-rules': 'CSP Rules',
+            generator: 'Generator',
+            schedule: 'Schedule'
+        };
+        document.getElementById('adminPageTitle').textContent = titles[section] || section;
+
+        const sectionMap = { dashboard: 0, 'data-master': 1, 'csp-rules': 2, generator: 3, schedule: 4 };
+        const idx = sectionMap[section];
+        if (idx !== undefined) {
+            const items = document.querySelectorAll('.sidebar-nav a');
+            if (items[idx]) items[idx].classList.add('active');
+        }
+
+        const elMap = {
+            dashboard: 'adminDashboardSection',
+            'data-master': 'adminDataMasterSection',
+            'csp-rules': 'adminCspRulesSection',
+            generator: 'adminGeneratorSection',
+            schedule: 'adminScheduleSection'
+        };
+        const el = document.getElementById(elMap[section]);
+        if (el) {
+            el.className = 'section-active';
+            if (section === 'data-master') {
+                el.className = 'section-active data-master-container';
+                renderDataMaster();
+            }
+            if (section === 'schedule') {
+                renderSchedule();
+            }
+            if (section === 'dashboard') {
+                loadDashboardStats();
+                initChart();
+            }
+        }
+    }
+
+    async function renderDataMaster() {
+        try {
+            // --- Ambil data dosen dari backend ---
+            const lecturersRes = await fetch('http://localhost:8080/api/admin/lecturers');
+            const lecturers = await lecturersRes.json();
+            const lc = document.getElementById('lecturerListDataMaster');
+            lc.innerHTML = lecturers.map(l =>
+                `<div class="master-item">
+                <div>
+                    <div class="item-name">${l.nama}</div>
+                    <div class="item-sub">${l.nip || '-'} • ${l.sks} SKS</div>
+                </div>
+                <span class="item-edit material-symbols-outlined" onclick="showToast('info','Edit mode')">edit</span>
+            </div>`
+            ).join('');
+
+            // --- Ambil data ruangan dari backend ---
+            const roomsRes = await fetch('http://localhost:8080/api/admin/rooms');
+            const rooms = await roomsRes.json();
+            const rc = document.getElementById('roomListDataMaster');
+            rc.innerHTML = rooms.map(r =>
+                `<div class="master-item">
+                <div>
+                    <div class="item-name">${r.nama}</div>
+                    <div style="margin-top:2px;"><span class="${r.tipe==='Theory'?'badge-theory':'badge-lab'}">${r.tipe.toUpperCase()}</span></div>
+                </div>
+                <span class="item-edit material-symbols-outlined">edit</span>
+            </div>`
+            ).join('');
+
+            // --- Ambil data mata kuliah dari backend ---
+            const coursesRes = await fetch('http://localhost:8080/api/admin/courses');
+            const courses = await coursesRes.json();
+            const cc = document.getElementById('courseListDataMaster');
+            cc.innerHTML = courses.map(c =>
+                `<div class="master-item">
+                <div>
+                    <div class="item-name">${c.nama}</div>
+                    <div class="item-sub">${c.kode} • ${c.sks} SKS</div>
+                </div>
+                <span class="item-edit material-symbols-outlined">edit</span>
+            </div>`
+            ).join('');
+
+            document.querySelectorAll('.master-footer')[0].textContent =
+                `Showing ${lecturers.length} of ${lecturers.length} items`;
+
+            document.querySelectorAll('.master-footer')[1].textContent =
+                `Showing ${rooms.length} of ${rooms.length} items`;
+
+            document.querySelectorAll('.master-footer')[2].textContent =
+                `Showing ${courses.length} of ${courses.length} items`;
+
+            document.getElementById('masterStatLecturers').textContent = lecturers.length;
+            document.getElementById('masterStatRooms').textContent = rooms.length;
+            document.getElementById('masterStatCourses').textContent = courses.length;
+
+        } catch (err) {
+            console.error(err);
+            showToast('error', 'Gagal memuat data master dari server');
+        }
+    }
+
+    // ==========================================================
+    // MODAL ADD DATA MASTER
+    // ==========================================================
+    const modalFieldConfig = {
+        lecturer: {
+            title: 'Tambah Dosen',
+            endpoint: 'http://localhost:8080/api/admin/lecturers',
+            fields: [
+                { name: 'nama', label: 'Nama Dosen', type: 'text', required: true },
+                { name: 'nip', label: 'NIP', type: 'text', required: false },
+                { name: 'sks', label: 'SKS', type: 'number', required: true }
+            ]
+        },
+        room: {
+            title: 'Tambah Ruangan',
+            endpoint: 'http://localhost:8080/api/admin/rooms',
+            fields: [
+                { name: 'nama', label: 'Nama Ruangan', type: 'text', required: true },
+                { name: 'tipe', label: 'Tipe', type: 'select', options: ['Theory', 'Lab'], required: true },
+                { name: 'kapasitas', label: 'Kapasitas', type: 'number', required: true }
+            ]
+        },
+        course: {
+            title: 'Tambah Mata Kuliah',
+            endpoint: 'http://localhost:8080/api/admin/courses',
+            fields: [
+                { name: 'kode', label: 'Kode MK', type: 'text', required: true },
+                { name: 'nama', label: 'Nama Mata Kuliah', type: 'text', required: true },
+                { name: 'sks', label: 'SKS', type: 'number', required: true },
+                { name: 'tipe', label: 'Tipe', type: 'select', options: ['Teori', 'Praktek'], required: true }
+            ]
+        }
+    };
+
+    let currentModalType = null;
+
+    function openAddModal(type) {
+        currentModalType = type;
+        const config = modalFieldConfig[type];
+        document.getElementById('addModalTitle').textContent = config.title;
+
+        const fieldsContainer = document.getElementById('addModalFields');
+        fieldsContainer.innerHTML = config.fields.map(f => {
+            if (f.type === 'select') {
+                return `
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${f.label}</label>
+                        <select name="${f.name}" ${f.required ? 'required' : ''} style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none;">
+                            ${f.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>
+                    </div>`;
+            }
+            return `
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${f.label}</label>
+                    <input type="${f.type}" name="${f.name}" ${f.required ? 'required' : ''} style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;" />
+                </div>`;
+        }).join('');
+
+        document.getElementById('addDataModal').style.display = 'flex';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addDataModal').style.display = 'none';
+        document.getElementById('addDataForm').reset();
+        currentModalType = null;
+    }
+
+    document.getElementById('addDataForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!currentModalType) return;
+
+        const config = modalFieldConfig[currentModalType];
+        const formData = new FormData(e.target);
+        const payload = {};
+
+        config.fields.forEach(f => {
+            let value = formData.get(f.name);
+            if (f.type === 'number') value = Number(value);
+            payload[f.name] = value;
+        });
+
+        try {
+            const res = await fetch(config.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error('Gagal menyimpan data');
+
+            showToast('success', `${config.title} berhasil ditambahkan!`);
+            closeAddModal();
+            renderDataMaster();
+            loadDashboardStats();
+        } catch (err) {
+            console.error(err);
+            showToast('error', 'Gagal menambahkan data. Cek koneksi backend.');
+        }
+    });
+
+
+    // ==========================================================
+    // CHART: Distribusi Beban SKS Dosen
+    // ==========================================================
+    async function initChart() {
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/lecturers');
+            const lecturers = await res.json();
+
+            const labels = lecturers.map(l => l.nama);
+            const data = lecturers.map(l => l.sks);
+
+            // Warna beda kalau SKS di luar rentang optimal (12-24)
+            const backgroundColors = data.map(sks => {
+                if (sks < 12) return '#fbbf24';      // kuning: kurang
+                if (sks > 24) return '#dc2626';       // merah: lebih
+                return '#1a3a7a';                     // biru: optimal
+            });
+
+            const ctx = document.getElementById('sksChart');
+            if (!ctx) return;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Beban SKS',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 6,
+                        maxBarThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.parsed.y} SKS`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'SKS' },
+                            ticks: { stepSize: 4 }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Gagal load chart SKS dosen:', err);
+        }
+    }
+
+    // Generator
+    async function runGenerator() {
+        const terminal = document.getElementById('terminal');
+        if (!terminal) return;
+
+        terminal.innerHTML = '<p style="color:rgba(255,255,255,0.4)">⏳ Menjalankan algoritma...</p>';
+
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+
+            const logs = data.logs || ['Selesai.'];
+            terminal.innerHTML = logs
+                .map(msg => `<p style="color:#10b981;margin-bottom:4px">${msg}</p>`)
+                .join('');
+
+            showToast('success', 'Jadwal berhasil digenerate!');
+            renderSchedule();
+        } catch (err) {
+            terminal.innerHTML = `<p style="color:#ef4444">❌ Error: ${err.message}</p>`;
+            showToast('error', 'Gagal generate jadwal');
+        }
+    }
+
+    async function loadDashboardStats() {
+        try {
+            const res = await fetch('/api/admin/dashboard');
+            const data = await res.json();
+
+            document.getElementById('stat-matakuliah').textContent = data.totalMataKuliah ?? '-';
+            document.getElementById('stat-dosen').textContent      = data.totalDosen       ?? '-';
+            document.getElementById('stat-ruangan').textContent    = data.totalRuangan     ?? '-';
+            document.getElementById('stat-konflik').textContent    = data.totalKonflik     ?? '-';
+        } catch (err) {
+            console.error('Gagal load dashboard stats:', err);
+        }
+    }
+
+    async function renderSchedule() {
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/schedule');
+            const jadwalList = await res.json();
+
+            const tbody = document.getElementById('scheduleBody');
+            if (!tbody) return;
+
+            if (jadwalList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">Belum ada jadwal. Klik Generate dulu.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = jadwalList.map(j => `
+    <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:12px 20px;">${j.hari ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.jamMulai ?? '-'} - ${j.jamSelesai ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.mataKuliah?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.dosen?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.ruangan?.nama ?? '-'}</td>
+    </tr>
+`).join('');
+
+        } catch (err) {
+            console.error('Gagal load jadwal:', err);
+        }
+    }
+
+    function initAdminApp() {
+        loadDashboardStats();
+        renderDataMaster();
+        renderSchedule();
+        initChart();
+        initTerminalLogs();
+        showAdminSection('csp-rules');
+    }
+
+    // ==========================================================
+    // 6. DOSEN DASHBOARD
+    // ==========================================================
+    function switchDosenView(view) {
+        const dash = document.getElementById('dosenViewDashboard');
+        const sched = document.getElementById('dosenViewSchedule');
+        const navDash = document.getElementById('nav-dosen-dashboard');
+        const navSched = document.getElementById('nav-dosen-schedule');
+
+        if (view === 'dashboard') {
+            dash.classList.remove('hidden-view');
+            sched.classList.add('hidden-view');
+            navDash.className = 'nav-link active';
+            navSched.className = 'nav-link';
+        } else {
+            sched.classList.remove('hidden-view');
+            dash.classList.add('hidden-view');
+            navSched.className = 'nav-link active';
+            navDash.className = 'nav-link';
+        }
+    }
+
+    async function loadDosenSchedule() {
+        try {
+            const res = await fetch('http://localhost:8080/api/dosen/schedule');
+            const jadwalList = await res.json();
+
+            const tbody = document.querySelector('#dosenScheduleTable tbody');
+            if (!tbody) return;
+
+            if (jadwalList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">Belum ada jadwal.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = jadwalList.map(j => `
+    <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:12px 20px;">${j.hari ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.jamMulai ?? '-'} - ${j.jamSelesai ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.mataKuliah?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.dosen?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.ruangan?.nama ?? '-'}</td>
+    </tr>
+`).join('');
+
+        } catch (err) {
+            console.error('Gagal load jadwal dosen:', err);
+        }
+    }
+
+    // Terminal log untuk dosen
+    function initDosenTerminal() {
+        const el = document.getElementById('terminalLog');
+        if (!el) return;
+        const lines = [
+            'Session heartbeat detected...',
+            'Refreshing cache for timetable data...',
+            'Cloud sync verified: 100%',
+            'User interaction logged: Dashboard View.'
+        ];
+        setInterval(() => {
+            const now = new Date();
+            const time =
+                `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+            const line = lines[Math.floor(Math.random() * lines.length)];
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 opacity-80';
+            div.innerHTML = `<span class="opacity-50">${time}</span><span>${line}</span>`;
+            while (el.children.length > 15) { el.removeChild(el.children[0]); }
+            const cursor = el.lastElementChild;
+            if (cursor && cursor.classList.contains('animate-pulse')) {
+                el.insertBefore(div, cursor);
+            } else {
+                el.appendChild(div);
+            }
+            el.scrollTop = el.scrollHeight;
+        }, 15000);
+    }
+
+    // ==========================================================
+    // 7. MAHASISWA DASHBOARD
+    // ==========================================================
+    function switchMhsView(viewTarget) {
+        const viewOverview = document.getElementById('mhsViewOverview');
+        const viewSchedule = document.getElementById('mhsViewSchedule');
+        const navOverview = document.getElementById('nav-mhs-overview');
+        const navSchedule = document.getElementById('nav-mhs-schedule');
+
+        const activeClasses = ['bg-[#0d347c]', 'text-white', 'shadow-sm', 'font-semibold'];
+        const inactiveClasses = ['text-gray-500', 'hover:bg-gray-50', 'hover:text-gray-900', 'font-medium'];
+
+
+        if (viewTarget === 'overview') {
+            viewOverview.classList.remove('hidden-view');
+            viewSchedule.classList.add('hidden-view');
+            navOverview.classList.remove(...inactiveClasses);
+            navOverview.classList.add(...activeClasses);
+            navSchedule.classList.remove(...activeClasses);
+            navSchedule.classList.add(...inactiveClasses);
+        } else {
+            viewSchedule.classList.remove('hidden-view');
+            viewOverview.classList.add('hidden-view');
+            navSchedule.classList.remove(...inactiveClasses);
+            navSchedule.classList.add(...activeClasses);
+            navOverview.classList.remove(...activeClasses);
+            navOverview.classList.add(...inactiveClasses);
+        }
+    }
+
+    async function loadMahasiswaSchedule() {
+        try {
+            const res = await fetch('http://localhost:8080/api/mahasiswa/schedule');
+            const jadwalList = await res.json();
+
+            const tbody = document.querySelector('#mhsScheduleTable tbody');
+            if (!tbody) return;
+
+            if (jadwalList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af">Belum ada jadwal.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = jadwalList.map(j => `
+    <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:12px 20px;">${j.hari ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.jamMulai ?? '-'} - ${j.jamSelesai ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.mataKuliah?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.dosen?.nama ?? '-'}</td>
+        <td style="padding:12px 20px;">${j.ruangan?.nama ?? '-'}</td>
+    </tr>
+`).join('');
+
+        } catch (err) {
+            console.error('Gagal load jadwal mahasiswa:', err);
+        }
+    }
+
+    // ==========================================================
+    // 8. AUTO RESTORE SESSION
+    // ==========================================================
+    window.addEventListener('DOMContentLoaded', function() {
+        const role = sessionStorage.getItem('polines_role');
+
+        if (role === 'admin') {
+            document.getElementById('loginPage').classList.add('hide');
+            document.getElementById('dashboardPage').classList.add('show');
+            document.getElementById('dosenApp').classList.remove('show');
+            document.getElementById('studentDashboardPage').classList.remove('show');
+            initAdminApp();
+            showToast('info', 'Sesi dilanjutkan. Selamat datang Admin.');
+        } else if (role === 'dosen') {
+            document.getElementById('loginPage').classList.add('hide');
+            document.getElementById('dosenApp').classList.add('show');
+            document.getElementById('dashboardPage').classList.remove('show');
+            document.getElementById('studentDashboardPage').classList.remove('show');
+            switchDosenView('dashboard');
+            initDosenTerminal();
+            showToast('info', 'Sesi dilanjutkan. Selamat datang kembali, Dosen.');
+        } else if (role === 'mahasiswa') {
+            document.getElementById('loginPage').classList.add('hide');
+            document.getElementById('studentDashboardPage').classList.add('show');
+            document.getElementById('dashboardPage').classList.remove('show');
+            document.getElementById('dosenApp').classList.remove('show');
+            switchMhsView('overview');
+            showToast('info', 'Sesi dilanjutkan. Selamat datang Budi Santoso.');
+        } else {
+            // Default ke dosen
+            selectedRole = 'dosen';
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.role-btn[data-role="dosen"]').classList.add('active');
+            document.getElementById('email').value = 'dosen@polines.ac.id';
+            document.getElementById('password').value = 'dosen123';
+        }
+    });
+
+    // ==========================================================
+    // 9. INIT TERMINAL CSP (admin) auto-update
+    // ==========================================================
+    setInterval(() => {
+        const termBody = document.getElementById('cspTerminalBody');
+        if (!termBody) return;
+        if (termBody.children.length > 15) return;
+        const msgs = [
+            '[INFO] Heartbeat: CSP engine running smoothly',
+            '[INFO] Conflict matrix: 0 hard conflicts detected',
+            '[INFO] Soft constraint solver: idle'
+        ];
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        const line = document.createElement('div');
+        line.className = 'line-muted';
+        line.textContent = msg;
+        line.style.fontSize = '12px';
+        termBody.appendChild(line);
+        termBody.scrollTop = termBody.scrollHeight;
+    }, 8000);
+
+    console.log('Polines Scheduler — Unified System Loaded.');
+</script>
+
+</body>
+</html>
