@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildContext": "scheduler_dosen2-master"
+  },
+  "deploy": {
+    "startCommand": "java -jar scheduler_dosen2-master/target/*.jar"
+  }
+}
